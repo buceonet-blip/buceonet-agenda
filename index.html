@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buceonet Agenda</title>
+<style>
+:root {
+  --site-primary: #123b35;
+  --site-on-primary: #ffffff;
+  --site-secondary: #e0a83e;
+  --site-on-secondary: #1b241f;
+  --site-background: #f2f5f2;
+  --site-on-background: #17211e;
+  --site-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-font-heading: Inter, ui-sans-serif, system-ui, sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  color-scheme: light dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--site-font-body); background: var(--site-background); color: var(--site-on-background); }
+#app { min-height: 100vh; width: 100%; border-radius: 0; background-color: light-dark(var(--site-background), #101714); color: light-dark(var(--site-on-background), #edf3ef); }
+header { background: var(--site-primary); color: var(--site-on-primary); padding: calc(22px * var(--site-spacing-scale)) max(18px, calc((100vw - 1100px)/2)); }
+.top { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.brand { display:flex; align-items:center; gap:12px; }
+.logo { width:44px; height:44px; border-radius:14px; display:grid; place-items:center; background:var(--site-secondary); color:var(--site-on-secondary); font-weight:900; letter-spacing:-1px; }
+h1 { font-family:var(--site-font-heading); font-size:calc(25px * var(--site-heading-scale)); margin:0; letter-spacing:-.7px; }
+.sub { color:#d4e4dd; font-size:13px; margin-top:3px; }
+.user { border:1px solid #ffffff55; border-radius:999px; padding:8px 12px; font-size:12px; white-space:nowrap; }
+main { max-width:1100px; margin:auto; padding:22px 18px 44px; }
+.welcome { display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:18px; }
+h2 { font-size:calc(21px * var(--site-heading-scale)); margin:0; letter-spacing:-.4px; }
+.muted { color:light-dark(#68766f,#aab8b0); font-size:13px; }
+.btn { border:0; border-radius:12px; background:var(--site-secondary); color:var(--site-on-secondary); padding:12px 16px; font-weight:800; cursor:pointer; font-size:14px; }
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+.stat,.panel { background:light-dark(#ffffff,#1b2520); border:1px solid light-dark(#e2e9e4,#34433b); border-radius:calc(17px * var(--site-radius-scale)); padding:16px; }
+.stat strong { display:block; font-size:25px; margin-top:5px; }
+.stat span { color:light-dark(#68766f,#aab8b0); font-size:12px; }
+.layout { display:grid; grid-template-columns:1.05fr .95fr; gap:16px; align-items:start; }
+.panel h3 { margin:0 0 14px; font-size:16px; }
+.toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.toolbar input { max-width:175px; }
+input,select,textarea { width:100%; border:1px solid light-dark(#d8e1db,#43534a); background:light-dark(#fff,#111a16); color:inherit; border-radius:10px; padding:11px 12px; font:inherit; font-size:14px; outline:none; }
+input:focus,select:focus,textarea:focus { border-color:var(--site-secondary); box-shadow:0 0 0 3px #e0a83e30; }
+.field { display:grid; gap:6px; margin-bottom:12px; }
+.checks { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.check-option { display:flex; align-items:center; gap:8px; border:1px solid light-dark(#d8e1db,#43534a); border-radius:10px; padding:10px; font-size:13px; }
+.check-option input { width:auto; margin:0; accent-color:var(--site-primary); }
+label { font-size:12px; font-weight:700; color:light-dark(#53635a,#c2cec6); }
+.formgrid { display:grid; grid-template-columns:1fr 1fr; gap:0 10px; }
+.full { grid-column:1/-1; }
+.segment { display:flex; gap:7px; margin-bottom:13px; }
+.segment button { flex:1; border:1px solid light-dark(#d8e1db,#43534a); border-radius:10px; padding:10px 8px; background:transparent; color:inherit; cursor:pointer; font-weight:700; }
+.segment button.active { background:var(--site-primary); color:white; border-color:var(--site-primary); }
+.entry { display:flex; justify-content:space-between; gap:10px; padding:12px 0; border-bottom:1px solid light-dark(#e8eee9,#34433b); }
+.entry:last-child { border-bottom:0; }
+.entry strong { display:block; font-size:14px; }
+.entry small { display:block; color:light-dark(#6b7971,#aab8b0); margin-top:4px; font-size:12px; }
+.tag { align-self:flex-start; white-space:nowrap; border-radius:999px; background:light-dark(#edf3ee,#2a3930); padding:5px 8px; font-size:11px; font-weight:700; }
+.empty { color:light-dark(#748078,#aab8b0); text-align:center; padding:24px 8px; font-size:13px; }
+.calendar-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+.calendar-head button,.day-nav button { border:1px solid light-dark(#d8e1db,#43534a); background:transparent; color:inherit; border-radius:9px; padding:8px 11px; cursor:pointer; }
+.calendar-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:5px; }
+.weekday { text-align:center; font-size:11px; font-weight:800; color:light-dark(#68766f,#aab8b0); padding:7px 0; }
+.day { min-height:76px; border:1px solid light-dark(#e2e9e4,#34433b); border-radius:9px; padding:6px; background:light-dark(#fff,#111a16); color:inherit; text-align:left; cursor:pointer; min-width:0; }
+.day.outside { opacity:.35; }
+.day.selected { outline:2px solid var(--site-secondary); background:light-dark(#fff8e9,#302a1b); }
+.day.today .day-number { background:var(--site-primary); color:white; }
+.day-number { display:inline-grid; place-items:center; width:24px; height:24px; border-radius:50%; font-size:12px; font-weight:800; }
+.day-count { display:block; margin-top:6px; font-size:10px; color:light-dark(#53635a,#c2cec6); line-height:1.25; }
+.day-slots { margin-top:16px; border-top:1px solid light-dark(#e8eee9,#34433b); padding-top:14px; }
+.day-nav { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.slots { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+.slot { display:flex; justify-content:space-between; align-items:center; gap:5px; border:1px solid light-dark(#d8e1db,#43534a); border-radius:8px; padding:8px; font-size:12px; }
+.slot.busy { background:light-dark(#edf3ee,#2a3930); border-color:light-dark(#b8c9bd,#50685a); }
+.slot button { border:0; background:transparent; color:var(--site-primary); font-weight:800; padding:2px; cursor:pointer; }
+.slot.busy button { color:light-dark(#123b35,#d4e4dd); }
+.notice { margin-top:14px; background:light-dark(#fff8e9,#302a1b); border:1px solid #e0a83e66; padding:12px 14px; border-radius:12px; color:light-dark(#67501e,#f0d99d); font-size:12px; line-height:1.5; }
+.toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#17211e; color:#fff; padding:11px 16px; border-radius:999px; display:none; box-shadow:0 8px 28px #0003; font-size:13px; }
+.auth-wrap{max-width:460px;margin:30px auto;padding:20px;background:light-dark(#fff,#1b2520);border:1px solid light-dark(#e2e9e4,#34433b);border-radius:17px}.auth-wrap h2{margin-bottom:8px}.auth-wrap .btn{width:100%}.auth-error{color:#b42318;font-size:13px;margin-top:10px}.auth-info{font-size:13px;color:light-dark(#68766f,#aab8b0);line-height:1.5;margin:10px 0 16px}.hidden{display:none!important}.account-actions{display:flex;align-items:center;gap:8px}.account-actions button{border:1px solid #ffffff66;background:transparent;color:white;border-radius:999px;padding:7px 10px;font-size:12px}
+@media(max-width:760px) { .layout {grid-template-columns:1fr;} .stats {gap:8px;} .stat {padding:12px;} .stat strong {font-size:21px;} .welcome {align-items:flex-start;} .welcome .btn {padding:10px 12px;} }
+@media(max-width:420px) { .user {display:none;} .formgrid {grid-template-columns:1fr;} .full {grid-column:auto;} .stats .stat span {font-size:11px;} }
+</style>
+</head>
+<body>
+<div id="app">
+<header><div class="top"><div class="brand"><div class="logo">B</div><div><h1>Buceonet Agenda</h1><div class="sub">Agenda de reparaciones</div></div></div><div class="account-actions"><div class="user" id="userLabel">● Sin conexión</div><button id="logoutBtn" class="hidden" type="button" onclick="logout()">Salir</button></div></div></header>
+<section class="auth-wrap" id="loginPanel"><h2>Ingresar a Buceonet Agenda</h2><div class="auth-info">Usá tu correo y contraseña de Firebase. Marcelo y Alejandro comparten la misma agenda.</div><form id="loginForm"><div class="field"><label for="loginEmail">Correo electrónico</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="tu correo"></div><div class="field"><label for="loginPassword">Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Contraseña"></div><button class="btn" type="submit">Ingresar</button><div class="auth-error" id="loginError"></div></form></section>
+<main id="agendaMain" class="hidden">
+<div class="welcome"><div><h2>Agenda del taller</h2><div class="muted">Organizá las citas y reparaciones de todo el mes</div></div><button class="btn" onclick="document.getElementById('cliente').focus()">＋ Nueva cita</button></div>
+<div class="stats"><div class="stat"><span>Citas registradas</span><strong id="count">2</strong></div><div class="stat"><span>Joysticks</span><strong id="sticks">1</strong></div><div class="stat"><span>Consolas</span><strong id="consoles">1</strong></div></div>
+<div class="layout">
+<section class="panel"><div class="calendar-head"><button type="button" onclick="changeMonth(-1)" aria-label="Mes anterior">‹</button><div style="text-align:center"><h3 id="monthLabel" style="margin:0"></h3><div class="muted">Lunes a sábado · 12:00 a 19:00</div></div><button type="button" onclick="changeMonth(1)" aria-label="Mes siguiente">›</button></div><div class="calendar-grid" id="calendar"></div><div class="day-slots"><div class="day-nav"><button type="button" onclick="changeDay(-1)">‹ Día anterior</button><strong id="selectedLabel"></strong><button type="button" onclick="changeDay(1)">Día siguiente ›</button></div><div class="slots" id="slots"></div></div><div class="notice">Cada turno dura 30 minutos. Horario disponible de lunes a sábado, de 12:00 a 19:00 (último turno 18:30). Los domingos no se agenda. Las citas se sincronizan en línea entre los teléfonos de Marcelo y Alejandro.</div></section>
+<section class="panel"><h3 id="formTitle">Registrar reparación</h3>
+<div class="segment"><button type="button" id="stickBtn" class="active" onclick="setKind('Joystick')">🎮 Joystick</button><button type="button" id="consoleBtn" onclick="setKind('Consola')">🕹️ Consola</button></div>
+<form id="form"><input type="hidden" id="editingId"><div class="formgrid">
+<div class="field full"><label for="cliente">Nombre del cliente</label><input id="cliente" required placeholder="Ej. Juan Pérez"></div>
+<div class="field full"><label for="agendadoPor">Agendado por</label><select id="agendadoPor" required><option value="" selected disabled>Seleccioná quién agenda</option><option value="Marcelo">Marcelo</option><option value="Alejandro">Alejandro</option></select></div>
+<div class="field"><label for="telefono">Teléfono</label><input id="telefono" placeholder="09..." inputmode="tel"></div>
+<div class="field"><label for="equipo">Equipo / modelo</label><select id="equipo"></select></div>
+<div class="field full" id="fallaWrap"><label for="falla">Falla o trabajo solicitado</label><textarea id="falla" rows="2" placeholder="Describí brevemente la falla"></textarea></div>
+<div class="field"><label for="fecha">Fecha</label><input id="fecha" type="date" required></div>
+<div class="field"><label for="hora">Hora</label><input id="hora" type="time" required></div>
+<div class="field full"><label for="estado">Estado</label><select id="estado"><option>Agendado</option><option>En revisión</option><option>En reparación</option><option>Pronto para entregar</option><option>Entregado</option><option>Cancelado</option></select></div>
+</div><button class="btn" id="saveBtn" type="submit" style="width:100%">Guardar cita</button><button class="segment" id="cancelEditBtn" type="button" onclick="cancelEdit()" style="display:none;width:100%;margin-top:8px">Cancelar edición</button></form>
+</section>
+</div>
+</main></div><div class="toast" id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA6WGuO-dp38nGc8CI7bKEazEeWoo1Cmnk",
+  authDomain: "buceonet-agenda.firebaseapp.com",
+  projectId: "buceonet-agenda",
+  storageBucket: "buceonet-agenda.firebasestorage.app",
+  messagingSenderId: "927722900258",
+  appId: "1:927722900258:web:361517e1710a8a0ca7b37b"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(), db=firebase.firestore(), citasRef=db.collection('citas');
+let kind='Joystick', appointments=[], unsubscribeCitas=null, currentUser=null;
+const options={Joystick:['PlayStation 5 · DualSense','PlayStation 4 · DualShock 4','Xbox','Nintendo'],Consola:['PlayStation 5','PlayStation 4','Xbox','Nintendo Switch','Otra Nintendo']};
+let viewMonth=new Date(), selectedDate=new Date();
+function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function slotId(fecha,hora){return `${fecha}_${hora.replace(':','-')}`;}
+function isBookableDate(d){return d.getDay()!==0;}
+function times(){let a=[];for(let m=12*60;m<19*60;m+=30)a.push(`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`);return a;}
+function setKind(k){kind=k;document.getElementById('stickBtn').classList.toggle('active',k==='Joystick');document.getElementById('consoleBtn').classList.toggle('active',k==='Consola');document.getElementById('equipo').innerHTML=options[k].map(x=>`<option>${x}</option>`).join('');document.getElementById('fallaWrap').innerHTML=k==='Joystick'?'<label>Fallas (podés seleccionar varias)</label><div class="checks"><label class="check-option"><input type="checkbox" name="falla" value="Drift en R3">Drift en R3</label><label class="check-option"><input type="checkbox" name="falla" value="Drift en L3">Drift en L3</label><label class="check-option"><input type="checkbox" name="falla" value="Botones">Botones</label><label class="check-option"><input type="checkbox" name="falla" value="Placa">Placa</label></div>':'<label for="falla">Falla o trabajo solicitado</label><textarea id="falla" rows="2" placeholder="Describí brevemente la falla"></textarea>';}
+function render(){document.getElementById('count').textContent=appointments.length;document.getElementById('sticks').textContent=appointments.filter(a=>a.kind==='Joystick').length;document.getElementById('consoles').textContent=appointments.filter(a=>a.kind==='Consola').length;let y=viewMonth.getFullYear(),m=viewMonth.getMonth();document.getElementById('monthLabel').textContent=new Date(y,m,1).toLocaleDateString('es-UY',{month:'long',year:'numeric'});let first=new Date(y,m,1),offset=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),html=['Lun','Mar','Mié','Jue','Vie','Sáb'].map(x=>`<div class="weekday">${x}</div>`).join('');for(let i=0;i<offset;i++){let d=new Date(y,m,1-offset+i);html+=`<div class="day outside"><span class="day-number">${d.getDate()}</span></div>`;}for(let n=1;n<=days;n++){let d=new Date(y,m,n);if(d.getDay()===0)continue;let key=dateKey(d),count=appointments.filter(a=>a.fecha===key&&a.estado!=='Cancelado').length;html+=`<button type="button" class="day ${key===dateKey(selectedDate)?'selected':''} ${key===dateKey(new Date())?'today':''}" onclick="selectDate('${key}')"><span class="day-number">${n}</span><span class="day-count">${count?count+' cita'+(count===1?'':'s'):'Libre'}</span></button>`;}document.getElementById('calendar').innerHTML=html;renderSlots();}
+function selectDate(key){let p=key.split('-').map(Number);selectedDate=new Date(p[0],p[1]-1,p[2]);viewMonth=new Date(p[0],p[1]-1,1);render();}
+function changeMonth(delta){viewMonth=new Date(viewMonth.getFullYear(),viewMonth.getMonth()+delta,1);let d=new Date(viewMonth.getFullYear(),viewMonth.getMonth(),Math.min(selectedDate.getDate(),new Date(viewMonth.getFullYear(),viewMonth.getMonth()+1,0).getDate()));while(d.getDay()===0)d.setDate(d.getDate()+1);selectedDate=d;render();}
+function changeDay(delta){let d=new Date(selectedDate);do{d.setDate(d.getDate()+delta);}while(d.getDay()===0);selectDate(dateKey(d));}
+function renderSlots(){let key=dateKey(selectedDate);document.getElementById('selectedLabel').textContent=selectedDate.toLocaleDateString('es-UY',{weekday:'long',day:'numeric',month:'long'});let list=appointments.filter(a=>a.fecha===key&&a.estado!=='Cancelado');document.getElementById('slots').innerHTML=!isBookableDate(selectedDate)?'<div class="empty" style="grid-column:1/-1">Domingo: el taller permanece cerrado.</div>':times().map(t=>{let a=list.find(x=>x.hora===t);return `<div class="slot ${a?'busy':''}"><span><strong>${t}</strong>${a?'<br>'+escapeHtml(a.cliente):' · Disponible'}</span>${a?`<span><button type="button" onclick="editAppointment('${a.docId}')">Editar</button><button type="button" onclick="deleteAppointment('${a.docId}')" aria-label="Borrar cita">Borrar</button></span>`:''}</div>`;}).join('');}
+function showAppointment(id){let a=appointments.find(x=>x.docId===id);if(a)toast(`${a.cliente} · ${a.equipo} · ${a.estado} · Agendó: ${a.agendadoPor||'Sin identificar'}`);}
+function editAppointment(id){const a=appointments.find(x=>x.docId===id);if(!a)return;document.getElementById('editingId').value=id;setKind(a.kind||'Joystick');document.getElementById('cliente').value=a.cliente||'';document.getElementById('agendadoPor').value=a.agendadoPor||'';document.getElementById('telefono').value=a.telefono||'';document.getElementById('equipo').value=a.equipo||'';document.getElementById('fecha').value=a.fecha||'';document.getElementById('hora').value=a.hora||'';document.getElementById('estado').value=a.estado||'Agendado';if(a.kind==='Joystick'){const vals=(a.falla||'').split(',').map(x=>x.trim());document.querySelectorAll('input[name="falla"]').forEach(x=>x.checked=vals.includes(x.value));}else{const f=document.getElementById('falla');if(f)f.value=a.falla||'';}document.getElementById('formTitle').textContent='Modificar cita';document.getElementById('saveBtn').textContent='Guardar cambios';document.getElementById('cancelEditBtn').style.display='block';document.getElementById('form').scrollIntoView({behavior:'smooth',block:'start'});}
+function cancelEdit(){document.getElementById('form').reset();document.getElementById('editingId').value='';document.getElementById('formTitle').textContent='Registrar reparación';document.getElementById('saveBtn').textContent='Guardar cita';document.getElementById('cancelEditBtn').style.display='none';setKind('Joystick');document.getElementById('fecha').value=dateKey(selectedDate);}
+async function deleteAppointment(id){let a=appointments.find(x=>x.docId===id);if(!a)return;if(!confirm(`¿Querés borrar la cita de ${a.cliente} del ${a.fecha} a las ${a.hora}? Esta acción no se puede deshacer.`))return;try{await citasRef.doc(id).delete();toast('Cita borrada de la agenda compartida');}catch(e){toast('No se pudo borrar: '+friendlyError(e));}}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg){let t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+function friendlyError(e){if(e.code==='permission-denied')return 'No tenés permiso. Revisá el acceso de Firebase.';if(e.code==='unavailable')return 'Sin conexión a internet.';return e.message||'Error inesperado';}
+function startSharedAgenda(){if(unsubscribeCitas)unsubscribeCitas();unsubscribeCitas=citasRef.onSnapshot(snap=>{appointments=snap.docs.map(d=>({...d.data(),docId:d.id}));render();},err=>toast('Error de sincronización: '+friendlyError(err)));}
+function stopSharedAgenda(){if(unsubscribeCitas){unsubscribeCitas();unsubscribeCitas=null;}appointments=[];render();}
+async function logout(){await auth.signOut();}
+auth.onAuthStateChanged(user=>{currentUser=user;let login=document.getElementById('loginPanel'),main=document.getElementById('agendaMain'),logoutBtn=document.getElementById('logoutBtn'),label=document.getElementById('userLabel');if(user){login.classList.add('hidden');main.classList.remove('hidden');logoutBtn.classList.remove('hidden');label.textContent='● '+(user.email||'Conectado');startSharedAgenda();}else{main.classList.add('hidden');login.classList.remove('hidden');logoutBtn.classList.add('hidden');label.textContent='● Sin conexión';stopSharedAgenda();}});
+document.getElementById('loginForm').addEventListener('submit',async e=>{e.preventDefault();let msg=document.getElementById('loginError');msg.textContent='';try{await auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value.trim(),document.getElementById('loginPassword').value);}catch(err){msg.textContent=err.code==='auth/invalid-credential'?'Correo o contraseña incorrectos.':friendlyError(err);}});
+document.getElementById('fecha').addEventListener('change',()=>{let d=new Date(document.getElementById('fecha').value+'T12:00:00');if(!isBookableDate(d)){toast('Los domingos no hay turnos');document.getElementById('fecha').value='';}});
+document.getElementById('hora').setAttribute('min','12:00');document.getElementById('hora').setAttribute('max','18:30');
+document.getElementById('form').addEventListener('submit',async e=>{e.preventDefault();if(!currentUser){toast('Primero ingresá a la agenda');return;}let fecha=document.getElementById('fecha').value,hora=document.getElementById('hora').value,d=new Date(fecha+'T12:00:00');if(!isBookableDate(d)||!times().includes(hora)){toast('Elegí lunes a sábado, entre 12:00 y 18:30');return;}const fallas=kind==='Joystick'?Array.from(document.querySelectorAll('input[name="falla"]:checked')).map(x=>x.value).join(', '):document.getElementById('falla').value;const data={cliente:document.getElementById('cliente').value.trim(),telefono:document.getElementById('telefono').value.trim(),agendadoPor:document.getElementById('agendadoPor').value,kind,equipo:document.getElementById('equipo').value,falla:fallas,fecha,hora,estado:document.getElementById('estado').value,creadoPor:currentUser.email,actualizadoEn:firebase.firestore.FieldValue.serverTimestamp()};const editingId=document.getElementById('editingId').value;let ref=citasRef.doc(slotId(fecha,hora));try{await db.runTransaction(async tx=>{let snap=await tx.get(ref);if(snap.exists&&ref.id!==editingId&&snap.data().estado!=='Cancelado')throw new Error('SLOT_OCCUPIED');if(editingId&&editingId!==ref.id){let oldRef=citasRef.doc(editingId);tx.delete(oldRef);}tx.set(ref,{...data,creadoPor:editingId?(appointments.find(a=>a.docId===editingId)?.creadoPor||currentUser.email):currentUser.email});});selectDate(fecha);cancelEdit();toast(editingId?'Cambios guardados y sincronizados':'Cita guardada y sincronizada');}catch(err){toast(err.message==='SLOT_OCCUPIED'?'Ese horario ya está ocupado. Elegí otro.':friendlyError(err));}});
+let today=new Date();if(today.getDay()===0)today.setDate(today.getDate()+1);document.getElementById('fecha').value=dateKey(today);viewMonth=new Date(today.getFullYear(),today.getMonth(),1);selectedDate=today;setKind('Joystick');render();
+</script>
+</body></html>
