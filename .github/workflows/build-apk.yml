@@ -25,8 +25,8 @@ jobs:
           root = Path("buceonet_apk/app/src/main")
           manifest = root / "AndroidManifest.xml"
           xml = manifest.read_text()
-          if 'android:icon=' not in xml:
-              xml = re.sub(r'<application\\b', '<application\\n        android:icon="@drawable/ic_launcher"', xml, count=1)
+          xml = re.sub(r'(<application\\b[^>]*?)\\s+android:icon="[^"]*"', r'\\1', xml, count=1, flags=re.S)
+          xml = re.sub(r'<application\\b', '<application\\n        android:icon="@drawable/ic_launcher"', xml, count=1)
           manifest.write_text(xml)
           res = root / "res/drawable"
           res.mkdir(parents=True, exist_ok=True)
