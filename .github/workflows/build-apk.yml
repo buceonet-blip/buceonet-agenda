@@ -50,6 +50,14 @@ jobs:
           """)
           PY
 
+      - name: Verify WhatsApp implementation in Android source
+        run: |
+          if grep -R -n -E 'wa\\.me|businessNameForEmail|isAppointmentOwner|WhatsApp' buceonet_apk/app/src/main; then
+            echo "WHATSAPP_SOURCE_FOUND"
+          else
+            echo "WHATSAPP_SOURCE_NOT_FOUND"
+          fi
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
