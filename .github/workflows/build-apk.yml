@@ -137,8 +137,8 @@ jobs:
           start = xml.index("<application")
           end = xml.index(">", start)
           tag = xml[start:end]
-          tag = re.sub('android:icon="[^"]*"', "", tag)
-          tag += ' android:icon="@drawable/ic_launcher"'
+          tag = re.sub('android:(?:icon|roundIcon)="[^"]*"', "", tag)
+          tag += ' android:icon="@drawable/ic_launcher" android:roundIcon="@drawable/ic_launcher"'
           xml = xml[:start] + tag + xml[end:]
           res = root / "res/drawable"
           res.mkdir(parents=True, exist_ok=True)
