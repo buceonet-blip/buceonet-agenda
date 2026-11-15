@@ -119,11 +119,11 @@ jobs:
           # Explicitly point both launcher entry points to the generated icon resources.
           xml = re.sub(r'android:icon="[^"]+"', 'android:icon="@mipmap/ic_launcher"', xml, count=1)
           if 'android:icon=' not in xml:
-              xml = re.sub(r'<application\\b', '<application android:icon="@mipmap/ic_launcher"', xml, count=1)
+              xml = xml.replace('<application', '<application android:icon="@mipmap/ic_launcher"', 1)
           if re.search(r'android:roundIcon="[^"]+"', xml):
               xml = re.sub(r'android:roundIcon="[^"]+"', 'android:roundIcon="@mipmap/ic_launcher_round"', xml, count=1)
           else:
-              xml = re.sub(r'<application\\b', '<application android:roundIcon="@mipmap/ic_launcher_round"', xml, count=1)
+              xml = xml.replace('<application', '<application android:roundIcon="@mipmap/ic_launcher_round"', 1)
           manifest.write_text(xml)
           PY
 
