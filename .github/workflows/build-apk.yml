@@ -137,11 +137,11 @@ jobs:
           xml = manifest.read_text(encoding="utf-8")
 
           # Use mipmap resources, not a drawable-only launcher icon.
-          match = re.search(r"<application\\b[^>]*>", xml, flags=re.S)
+          match = re.search(r"<application\b[^>]*>", xml, flags=re.S)
           if not match:
               raise SystemExit("No se encontró la etiqueta <application> en AndroidManifest.xml")
           tag = match.group(0)
-          tag = re.sub(r'\\s+android:(?:icon|roundIcon)="[^"]*"', "", tag)
+          tag = re.sub(r'\s+android:(?:icon|roundIcon)="[^"]*"', "", tag)
           tag = tag[:-1] + ' android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round">'
           xml = xml[:match.start()] + tag + xml[match.end():]
           manifest.write_text(xml, encoding="utf-8")
