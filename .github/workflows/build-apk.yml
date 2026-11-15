@@ -126,7 +126,7 @@ jobs:
           echo '--- MANIFEST ---'
           cat buceonet_apk/app/src/main/AndroidManifest.xml
 
-      - name: Create visible black and gold Buceonet Agenda launcher icon
+      - name: Create safe-zone black and gold Buceonet Agenda launcher icon
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pil fonts-dejavu-core
@@ -135,60 +135,58 @@ jobs:
           from pathlib import Path
 
           root = Path("buceonet_apk/app/src/main/res")
-          gold = (225, 174, 55, 255)
-          transparent = (0, 0, 0, 0)
+          gold = (229, 181, 66, 255)
+          S = 432
 
-          def make_art(size):
-              scale = size / 432
-              im = Image.new("RGBA", (size, size), transparent)
+          def build_icon():
+              im = Image.new("RGBA", (S,S), (0,0,0,0))
               d = ImageDraw.Draw(im)
-              def p(v): return int(round(v * scale))
-              # Calendar body and top rings, deliberately inside Android's adaptive safe zone.
-              d.rounded_rectangle((p(119),p(48),p(313),p(230)), radius=p(18), outline=gold, width=p(9))
-              d.line((p(119),p(102),p(313),p(102)), fill=gold, width=p(8))
-              d.line((p(164),p(34),p(164),p(73)), fill=gold, width=p(10))
-              d.line((p(268),p(34),p(268),p(73)), fill=gold, width=p(10))
-              # Calendar date marks
-              for x,y in [(155,132),(210,132),(265,132),(155,177),(210,177)]:
-                  d.rounded_rectangle((p(x),p(y),p(x+20),p(y+20)), radius=p(4), fill=gold)
-              # Clear, centered brand name
-              f1 = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", p(34))
-              f2 = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", p(38))
-              for label, y, font in [("BUCEONET", 258, f1), ("AGENDA", 310, f2)]:
+              # Everything stays inside the central adaptive-icon safe area (roughly 66%).
+              # Compact calendar in the upper half.
+              d.rounded_rectangle((142,82,290,202), radius=13, outline=gold, width=8)
+              d.line((142,119,290,119), fill=gold, width=7)
+              d.line((178,68,178,96), fill=gold, width=9)
+              d.line((254,68,254,96), fill=gold, width=9)
+              for x,y in [(168,139),(211,139),(254,139),(168,170),(211,170)]:
+                  d.rounded_rectangle((x,y,x+14,y+14), radius=3, fill=gold)
+              # Brand lettering, centered and comfortably inside safe zone.
+              font1 = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 29)
+              font2 = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 34)
+              for label, y, font in [("BUCEONET",224,font1),("AGENDA",268,font2)]:
                   box = d.textbbox((0,0), label, font=font, stroke_width=0)
-                  x = (size - (box[2]-box[0])) // 2
-                  d.text((x,p(y)), label, font=font, fill=gold)
+                  x = (S - (box[2]-box[0])) // 2
+                  d.text((x,y), label, font=font, fill=gold)
               return im
 
-          # Adaptive foreground: transparent edges, with all artwork in the safe center.
-          fgdir = root / "drawable-nodpi"
-          fgdir.mkdir(parents=True, exist_ok=True)
-          make_art(432).save(fgdir / "ic_launcher_foreground.png")
+          art = build_icon()
+          # Use a distinct resource name so an old vector drawable cannot override the new PNG.
+          (root / "drawable-nodpi").mkdir(parents=True, exist_ok=True)
+          art.save(root / "drawable-nodpi/ic_buceonet_agenda_foreground.png")
 
-          # Legacy launcher icon: full black square with the same gold artwork.
-          mip = root / "mipmap-nodpi"
-          mip.mkdir(parents=True, exist_ok=True)
+          # Legacy launchers receive the complete square icon.
+          legacy_dir = root / "mipmap-nodpi"
+          legacy_dir.mkdir(parents=True, exist_ok=True)
+          square = Image.new("RGBA", (512,512), (5,5,5,255))
+          square.alpha_composite(art.resize((512,512), Image.Resampling.LANCZOS))
           for name in ("ic_launcher.png", "ic_launcher_round.png"):
-              base = Image.new("RGBA", (512,512), (5,5,5,255))
-              art = make_art(432).resize((512,512), Image.Resampling.LANCZOS)
-              base.alpha_composite(art)
-              base.convert("RGB").save(mip / name)
+              square.convert("RGB").save(legacy_dir / name)
 
-          (root / "values").mkdir(parents=True, exist_ok=True)
-          (root / "values/ic_launcher_colors.xml").write_text(
+          values = root / "values"
+          values.mkdir(parents=True, exist_ok=True)
+          (values / "ic_launcher_colors.xml").write_text(
               '<?xml version="1.0" encoding="utf-8"?>\\n<resources><color name="ic_launcher_background">#050505</color></resources>\\n'
           )
           adaptive = '''<?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
               <background android:drawable="@color/ic_launcher_background"/>
-              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+              <foreground android:drawable="@drawable/ic_buceonet_agenda_foreground"/>
           </adaptive-icon>
           '''
           v26 = root / "mipmap-anydpi-v26"
           v26.mkdir(parents=True, exist_ok=True)
           for name in ("ic_launcher.xml", "ic_launcher_round.xml"):
               (v26 / name).write_text(adaptive)
-          print("Icono negro y oro creado con BUCEONET AGENDA visible.")
+          print("Launcher artwork and BUCEONET AGENDA text fit within adaptive safe zone.")
           PY
 
       - name: Verify shared WhatsApp features in the web app loaded by Android
