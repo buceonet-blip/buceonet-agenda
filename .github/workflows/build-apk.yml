@@ -25,9 +25,12 @@ jobs:
           root = Path("buceonet_apk/app/src/main")
           manifest = root / "AndroidManifest.xml"
           xml = manifest.read_text()
-          xml = re.sub(r'(<application\\b[^>]*?)\\s+android:icon="[^"]*"', r'\\1', xml, count=1, flags=re.S)
-          xml = re.sub(r'<application\\b', '<application\\n        android:icon="@drawable/ic_launcher"', xml, count=1)
-          manifest.write_text(xml)
+          start = xml.index("<application")
+          end = xml.index(">", start)
+          tag = xml[start:end]
+          tag = re.sub('android:icon="[^"]*"', "", tag)
+          tag += ' android:icon="@drawable/ic_launcher"'
+          xml = xml[:start] + tag + xml[end:]
           res = root / "res/drawable"
           res.mkdir(parents=True, exist_ok=True)
           (res / "ic_launcher.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
@@ -52,7 +55,7 @@ jobs:
 
       - name: Verify WhatsApp implementation in Android source
         run: |
-          if grep -R -n -E 'wa\\.me|businessNameForEmail|isAppointmentOwner|WhatsApp' buceonet_apk/app/src/main; then
+          if grep -R -n -E 'wa.me|businessNameForEmail|isAppointmentOwner|WhatsApp' buceonet_apk/app/src/main; then
             echo "WHATSAPP_SOURCE_FOUND"
           else
             echo "WHATSAPP_SOURCE_NOT_FOUND"
