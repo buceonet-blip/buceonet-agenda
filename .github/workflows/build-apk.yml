@@ -17,6 +17,13 @@ jobs:
       - name: Extract Android project
         run: unzip -o Buceonet_Agenda_APK_proyecto.zip
 
+      - name: Inspect Android activity and manifest
+        run: |
+          echo '--- MAIN ACTIVITY ---'
+          cat buceonet_apk/app/src/main/java/com/buceonet/agenda/MainActivity.java
+          echo '--- MANIFEST ---'
+          cat buceonet_apk/app/src/main/AndroidManifest.xml
+
       - name: Install Buceonet black and gold launcher icon
         run: |
           python3 - <<'PY'
