@@ -53,13 +53,12 @@ jobs:
           """)
           PY
 
-      - name: Verify WhatsApp implementation in Android source
+      - name: Verify shared WhatsApp features in the web app loaded by Android
         run: |
-          if grep -R -n -E 'wa.me|businessNameForEmail|isAppointmentOwner|WhatsApp' buceonet_apk/app/src/main; then
-            echo "WHATSAPP_SOURCE_FOUND"
-          else
-            echo "WHATSAPP_SOURCE_NOT_FOUND"
-          fi
+          grep -q 'businessNameForEmail' index.html
+          grep -q 'isAppointmentOwner' index.html
+          grep -q 'wa.me' index.html
+          grep -q 'https://buceonet-blip.github.io/buceonet-agenda/' buceonet_apk/app/src/main/java/com/buceonet/agenda/MainActivity.java
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -71,9 +70,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
-
-      - name: Inspect Android activity source for WhatsApp integration
-        run: cat buceonet_apk/app/src/main/java/com/buceonet/agenda/MainActivity.java
 
       - name: Build debug APK
         run: gradle -p buceonet_apk assembleDebug
