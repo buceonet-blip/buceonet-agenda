@@ -72,6 +72,9 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      - name: Inspect Android activity source for WhatsApp integration
+        run: cat buceonet_apk/app/src/main/java/com/buceonet/agenda/MainActivity.java
+
       - name: Build debug APK
         run: gradle -p buceonet_apk assembleDebug
 
