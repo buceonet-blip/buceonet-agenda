@@ -221,7 +221,7 @@ jobs:
                   else super.onBackPressed();
               }
           }
-          """))
+          """)
           manifest = root / "AndroidManifest.xml"
           xml = manifest.read_text()
           if "<queries>" not in xml:
