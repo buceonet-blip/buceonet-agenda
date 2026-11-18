@@ -186,7 +186,7 @@ const typeLabel=monthlyCurrentType==='Joystick'?'JOYSTICKS':'CONSOLAS';
 const lines=['BUCEONET AGENDA','LISTADO DE '+typeLabel,'Mes: '+monthLabel,'Filtro: '+(document.getElementById('monthlyCreatorFilter')?.value||'Todos'),'Total: '+list.length,''];
 list.forEach((a,i)=>{lines.push((i+1)+'. '+(a.fecha||'Sin fecha')+' · '+(a.hora||'Sin hora'));lines.push('Cliente: '+(a.cliente||'Sin nombre'));lines.push('Equipo: '+(a.equipo||monthlyCurrentType));lines.push('Reparación: '+(a.falla||'Sin descripción'));lines.push('Agendó: '+monthlyCreatorName(a));lines.push('Estado: '+(a.estado||'Agendado'));lines.push('');});
 const filename='Buceonet_'+typeLabel.toLowerCase()+'_'+monthlyCurrentMonth+'.txt';
-const content='\\uFEFF'+lines.join('\\r\\n');
+const content='\uFEFF'+lines.join('\r\n');
 if(window.BuceonetDownload&&typeof window.BuceonetDownload.saveTextFile==='function'){
 const encoded=btoa(unescape(encodeURIComponent(content)));
 window.BuceonetDownload.saveTextFile(filename,encoded);
