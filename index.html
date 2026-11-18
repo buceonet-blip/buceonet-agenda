@@ -179,22 +179,22 @@ return '<article class="monthly-item"><div class="monthly-item-top"><span class=
 }).join(''):'<div class="empty">No hay registros para este filtro en el mes seleccionado.</div>';
 }
 function exportMonthlyTxt(){
+try{
 const list=monthlyFilteredAppointments();
 const monthLabel=new Date(Number(monthlyCurrentMonth.slice(0,4)),Number(monthlyCurrentMonth.slice(5,7))-1,1).toLocaleDateString('es-UY',{month:'long',year:'numeric'});
 const typeLabel=monthlyCurrentType==='Joystick'?'JOYSTICKS':'CONSOLAS';
 const lines=['BUCEONET AGENDA','LISTADO DE '+typeLabel,'Mes: '+monthLabel,'Filtro: '+(document.getElementById('monthlyCreatorFilter')?.value||'Todos'),'Total: '+list.length,''];
 list.forEach((a,i)=>{lines.push((i+1)+'. '+(a.fecha||'Sin fecha')+' · '+(a.hora||'Sin hora'));lines.push('Cliente: '+(a.cliente||'Sin nombre'));lines.push('Equipo: '+(a.equipo||monthlyCurrentType));lines.push('Reparación: '+(a.falla||'Sin descripción'));lines.push('Agendó: '+monthlyCreatorName(a));lines.push('Estado: '+(a.estado||'Agendado'));lines.push('');});
 const filename='Buceonet_'+typeLabel.toLowerCase()+'_'+monthlyCurrentMonth+'.txt';
-const content='\uFEFF'+lines.join('\r\n');
+const content='\\uFEFF'+lines.join('\\r\\n');
 if(window.BuceonetDownload&&typeof window.BuceonetDownload.saveTextFile==='function'){
 const encoded=btoa(unescape(encodeURIComponent(content)));
 window.BuceonetDownload.saveTextFile(filename,encoded);
+toast('Preparando archivo TXT…');
 }else{
-const blob=new Blob([content],{type:'text/plain;charset=utf-8'});
-const url=URL.createObjectURL(blob),link=document.createElement('a');
-link.href=url;link.download=filename;
-document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+toast('Esta versión de la APK no tiene habilitado el guardado de TXT. Actualizá la aplicación.');
 }
+}catch(error){console.error('Error al exportar TXT:',error);toast('No se pudo generar el TXT: '+(error&&error.message?error.message:'error inesperado'));}
 }
 function openMonthlyList(type){
 const y=viewMonth.getFullYear(),m=viewMonth.getMonth();
