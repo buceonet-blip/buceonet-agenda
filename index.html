@@ -49,6 +49,11 @@ h2 { font-size:calc(21px * var(--site-heading-scale)); margin:0; letter-spacing:
 .monthly-head h3 { margin:0; font-size:19px; }
 .monthly-close { border:1px solid light-dark(#d8e1db,#43534a); border-radius:9px; background:transparent; color:inherit; padding:7px 11px; font-size:18px; cursor:pointer; }
 .monthly-summary { color:light-dark(#68766f,#aab8b0); font-size:12px; margin:10px 0; }
+.monthly-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:12px 0 4px; }
+.monthly-toolbar label { font-size:12px; font-weight:700; }
+.monthly-toolbar select,.monthly-export { min-height:38px; border:1px solid light-dark(#d8e1db,#43534a); border-radius:9px; padding:7px 10px; background:light-dark(#fff,#25332b); color:inherit; font:inherit; font-size:12px; }
+.monthly-export { background:#e0a83e; color:#1b241f; border-color:#d19b31; font-weight:800; cursor:pointer; margin-left:auto; }
+
 .monthly-item { padding:13px 0; border-bottom:1px solid light-dark(#e8eee9,#34433b); }
 .monthly-item:last-child { border-bottom:0; }
 .monthly-item-top { display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin-bottom:5px; }
@@ -155,16 +160,42 @@ function slotId(fecha,hora){return `${fecha}_${hora.replace(':','-')}`;}
 function isBookableDate(d){return d.getDay()!==0;}
 function times(){let a=[];for(let m=12*60;m<19*60;m+=30)a.push(`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`);return a;}
 function setKind(k){kind=k;document.getElementById('stickBtn').classList.toggle('active',k==='Joystick');document.getElementById('consoleBtn').classList.toggle('active',k==='Consola');document.getElementById('equipo').innerHTML=options[k].map(x=>`<option>${x}</option>`).join('');document.getElementById('fallaWrap').innerHTML=k==='Joystick'?'<label>Fallas (podés seleccionar varias)</label><div class="checks"><label class="check-option"><input type="checkbox" name="falla" value="Drift en R3">Drift en R3</label><label class="check-option"><input type="checkbox" name="falla" value="Drift en L3">Drift en L3</label><label class="check-option"><input type="checkbox" name="falla" value="Botones">Botones</label><label class="check-option"><input type="checkbox" name="falla" value="Placa">Placa</label></div>':'<label for="falla">Falla o trabajo solicitado</label><textarea id="falla" rows="2" placeholder="Describí brevemente la falla"></textarea>';}
-function openMonthlyList(type){
-const y=viewMonth.getFullYear(),m=viewMonth.getMonth(),monthLabel=new Date(y,m,1).toLocaleDateString('es-UY',{month:'long',year:'numeric'});
-const monthKey=y+'-'+String(m+1).padStart(2,'0');
-const list=appointments.filter(a=>a.kind===type&&String(a.fecha||'').slice(0,7)===monthKey).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')||(a.hora||'').localeCompare(b.hora||''));
-document.getElementById('monthlyTitle').textContent=type==='Joystick'?'Joysticks del mes':'Consolas del mes';
+let monthlyCurrentType='';
+let monthlyCurrentMonth='';
+function monthlyCreatorName(a){return businessNameForEmail(a.creadoPor)||'Sin identificar';}
+function monthlyFilteredAppointments(){
+const filter=document.getElementById('monthlyCreatorFilter')?.value||'Todos';
+return appointments.filter(a=>a.kind===monthlyCurrentType&&String(a.fecha||'').slice(0,7)===monthlyCurrentMonth&&(filter==='Todos'||monthlyCreatorName(a)===filter)).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')||(a.hora||'').localeCompare(b.hora||''));
+}
+function renderMonthlyList(){
+const list=monthlyFilteredAppointments();
+const monthLabel=new Date(Number(monthlyCurrentMonth.slice(0,4)),Number(monthlyCurrentMonth.slice(5,7))-1,1).toLocaleDateString('es-UY',{month:'long',year:'numeric'});
 document.getElementById('monthlySummary').textContent=list.length+' registro'+(list.length===1?'':'s')+' · '+monthLabel;
 document.getElementById('monthlyList').innerHTML=list.length?list.map(a=>{
 const d=a.fecha?new Date(a.fecha+'T12:00:00').toLocaleDateString('es-UY',{weekday:'short',day:'2-digit',month:'2-digit'}):'Fecha sin dato';
-return '<article class="monthly-item"><div class="monthly-item-top"><span class="monthly-date">'+escapeHtml(d)+' · '+escapeHtml(a.hora||'—')+'</span><span class="monthly-status '+(a.estado==='Cancelado'?'cancelled':'')+'">'+escapeHtml(a.estado||'Agendado')+'</span></div><div class="monthly-customer">'+escapeHtml(a.cliente||'Sin nombre')+'</div><div class="monthly-detail"><strong>'+escapeHtml(a.equipo||type)+'</strong><br>'+escapeHtml(a.falla||'Sin descripción de reparación')+'</div></article>';
-}).join(''):'<div class="empty">No hay '+(type==='Joystick'?'joysticks':'consolas')+' registrados en este mes.</div>';
+return '<article class="monthly-item"><div class="monthly-item-top"><span class="monthly-date">'+escapeHtml(d)+' · '+escapeHtml(a.hora||'—')+'</span><span class="monthly-status '+(a.estado==='Cancelado'?'cancelled':'')+'">'+escapeHtml(a.estado||'Agendado')+'</span></div><div class="monthly-customer">'+escapeHtml(a.cliente||'Sin nombre')+'</div><div class="monthly-detail"><strong>'+escapeHtml(a.equipo||monthlyCurrentType)+'</strong><br>'+escapeHtml(a.falla||'Sin descripción de reparación')+'<br><strong>Agendó:</strong> '+escapeHtml(monthlyCreatorName(a))+'</div></article>';
+}).join(''):'<div class="empty">No hay registros para este filtro en el mes seleccionado.</div>';
+}
+function exportMonthlyTxt(){
+const list=monthlyFilteredAppointments();
+const monthLabel=new Date(Number(monthlyCurrentMonth.slice(0,4)),Number(monthlyCurrentMonth.slice(5,7))-1,1).toLocaleDateString('es-UY',{month:'long',year:'numeric'});
+const typeLabel=monthlyCurrentType==='Joystick'?'JOYSTICKS':'CONSOLAS';
+const lines=['BUCEONET AGENDA','LISTADO DE '+typeLabel,'Mes: '+monthLabel,'Filtro: '+(document.getElementById('monthlyCreatorFilter')?.value||'Todos'),'Total: '+list.length,''];
+list.forEach((a,i)=>{lines.push((i+1)+'. '+(a.fecha||'Sin fecha')+' · '+(a.hora||'Sin hora'));lines.push('Cliente: '+(a.cliente||'Sin nombre'));lines.push('Equipo: '+(a.equipo||monthlyCurrentType));lines.push('Reparación: '+(a.falla||'Sin descripción'));lines.push('Agendó: '+monthlyCreatorName(a));lines.push('Estado: '+(a.estado||'Agendado'));lines.push('');});
+const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/plain;charset=utf-8'});
+const url=URL.createObjectURL(blob),link=document.createElement('a');
+link.href=url;link.download='Buceonet_'+typeLabel.toLowerCase()+'_'+monthlyCurrentMonth+'.txt';
+document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function openMonthlyList(type){
+const y=viewMonth.getFullYear(),m=viewMonth.getMonth();
+monthlyCurrentType=type;monthlyCurrentMonth=y+'-'+String(m+1).padStart(2,'0');
+document.getElementById('monthlyTitle').textContent=type==='Joystick'?'Joysticks del mes':'Consolas del mes';
+const host=document.getElementById('monthlyList');
+host.innerHTML='<div class="monthly-toolbar"><label for="monthlyCreatorFilter">Mostrar:</label><select id="monthlyCreatorFilter" onchange="renderMonthlyList()"><option value="Todos">Todos</option><option value="Buceonet">Solo Buceonet</option><option value="Center Games">Solo Center Games</option></select><button type="button" class="monthly-export" onclick="exportMonthlyTxt()">Descargar TXT</button></div><div id="monthlyResults"></div>';
+const originalRender=renderMonthlyList;
+renderMonthlyList=function(){const target=document.getElementById('monthlyResults');if(!target)return;const list=monthlyFilteredAppointments();const monthLabel=new Date(y,m,1).toLocaleDateString('es-UY',{month:'long',year:'numeric'});document.getElementById('monthlySummary').textContent=list.length+' registro'+(list.length===1?'':'s')+' · '+monthLabel;target.innerHTML=list.length?list.map(a=>{const d=a.fecha?new Date(a.fecha+'T12:00:00').toLocaleDateString('es-UY',{weekday:'short',day:'2-digit',month:'2-digit'}):'Fecha sin dato';return '<article class="monthly-item"><div class="monthly-item-top"><span class="monthly-date">'+escapeHtml(d)+' · '+escapeHtml(a.hora||'—')+'</span><span class="monthly-status '+(a.estado==='Cancelado'?'cancelled':'')+'">'+escapeHtml(a.estado||'Agendado')+'</span></div><div class="monthly-customer">'+escapeHtml(a.cliente||'Sin nombre')+'</div><div class="monthly-detail"><strong>'+escapeHtml(a.equipo||type)+'</strong><br>'+escapeHtml(a.falla||'Sin descripción de reparación')+'<br><strong>Agendó:</strong> '+escapeHtml(monthlyCreatorName(a))+'</div></article>';}).join(''):'<div class="empty">No hay registros para este filtro en el mes seleccionado.</div>';};
+renderMonthlyList();
 document.getElementById('monthlyOverlay').classList.add('open');document.body.style.overflow='hidden';
 }
 function closeMonthlyList(){document.getElementById('monthlyOverlay').classList.remove('open');document.body.style.overflow='';}
