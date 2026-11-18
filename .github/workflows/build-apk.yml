@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'Buceonet_Agenda_APK_proyecto.zip'
+      - 'index.html'
       - '.github/workflows/build-apk.yml'
 
 jobs:
