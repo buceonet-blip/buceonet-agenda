@@ -29,30 +29,36 @@ jobs:
           java.write_text("""package com.buceonet.agenda;
 
           import android.app.Activity;
-          import android.content.ContentValues;
           import android.content.ActivityNotFoundException;
           import android.content.Intent;
+          import android.content.SharedPreferences;
+          import android.database.Cursor;
           import android.net.Uri;
           import android.os.Bundle;
-          import android.os.Environment;
-          import android.provider.MediaStore;
+          import android.provider.DocumentsContract;
           import android.util.Base64;
           import android.webkit.JavascriptInterface;
           import android.webkit.WebChromeClient;
           import android.webkit.WebResourceRequest;
+          import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
           import android.widget.Toast;
           import java.io.OutputStream;
-          import android.webkit.WebSettings;
 
           public class MainActivity extends Activity {
               private WebView webView;
               private static final String AGENDA_URL = "https://buceonet-blip.github.io/buceonet-agenda/";
+              private static final int REQUEST_EXPORT_FOLDER = 501;
+              private Uri exportTreeUri;
+              private String pendingFilename;
+              private String pendingBase64;
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+                  exportTreeUri = Uri.parse(getPreferences(MODE_PRIVATE).getString("export_tree_uri", ""));
+                  if ("".equals(exportTreeUri.toString())) exportTreeUri = null;
                   webView = new WebView(this);
                   setContentView(webView);
                   WebSettings settings = webView.getSettings();
@@ -75,26 +81,105 @@ jobs:
                   webView.addJavascriptInterface(new Object() {
                       @JavascriptInterface
                       public void saveTextFile(String filename, String base64Content) {
-                          try {
-                              byte[] bytes = Base64.decode(base64Content, Base64.DEFAULT);
-                              ContentValues values = new ContentValues();
-                              values.put(MediaStore.Downloads.DISPLAY_NAME, filename);
-                              values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
-                              values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Buceonet Agenda");
-                              Uri fileUri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-                              if (fileUri == null) throw new IllegalStateException("No se pudo crear el archivo");
-                              try (OutputStream output = getContentResolver().openOutputStream(fileUri)) {
-                                  if (output == null) throw new IllegalStateException("No se pudo abrir el archivo");
-                                  output.write(bytes);
-                              }
-                              runOnUiThread(() -> Toast.makeText(MainActivity.this, "Listado guardado en Descargas/Buceonet Agenda", Toast.LENGTH_LONG).show());
-                          } catch (Exception error) {
-                              runOnUiThread(() -> Toast.makeText(MainActivity.this, "No se pudo guardar el TXT", Toast.LENGTH_LONG).show());
-                          }
+                          runOnUiThread(() -> {
+                              pendingFilename = filename;
+                              pendingBase64 = base64Content;
+                              if (exportTreeUri == null) chooseExportFolder();
+                              else savePendingText();
+                          });
                       }
                   }, "BuceonetDownload");
                   if (savedInstanceState == null) webView.loadUrl(AGENDA_URL);
                   else webView.restoreState(savedInstanceState);
+              }
+
+              private void chooseExportFolder() {
+                  Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                  intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                      Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+                      Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                  startActivityForResult(intent, REQUEST_EXPORT_FOLDER);
+                  Toast.makeText(this, "Elegí Almacenamiento interno para crear las carpetas de Buceonet", Toast.LENGTH_LONG).show();
+              }
+
+              @Override
+              protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+                  super.onActivityResult(requestCode, resultCode, data);
+                  if (requestCode != REQUEST_EXPORT_FOLDER) return;
+                  if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+                      Toast.makeText(this, "No se eligió una carpeta. Volvé a tocar Descargar TXT.", Toast.LENGTH_LONG).show();
+                      return;
+                  }
+                  exportTreeUri = data.getData();
+                  int flags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                  try {
+                      getContentResolver().takePersistableUriPermission(exportTreeUri, flags);
+                      getPreferences(MODE_PRIVATE).edit().putString("export_tree_uri", exportTreeUri.toString()).apply();
+                      savePendingText();
+                  } catch (Exception error) {
+                      exportTreeUri = null;
+                      Toast.makeText(this, "No se pudo habilitar esa carpeta. Elegí otra ubicación.", Toast.LENGTH_LONG).show();
+                  }
+              }
+
+              private Uri getOrCreateFolder(Uri parentUri, String name) throws Exception {
+                  String parentId = DocumentsContract.getDocumentId(parentUri);
+                  Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parentUri, parentId);
+                  try (Cursor cursor = getContentResolver().query(childrenUri,
+                      new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                          DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                          DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null)) {
+                      if (cursor != null) {
+                          while (cursor.moveToNext()) {
+                              if (name.equals(cursor.getString(1)) &&
+                                  DocumentsContract.Document.MIME_TYPE_DIR.equals(cursor.getString(2))) {
+                                  return DocumentsContract.buildDocumentUriUsingTree(parentUri, cursor.getString(0));
+                              }
+                          }
+                      }
+                  }
+                  Uri created = DocumentsContract.createDocument(getContentResolver(), parentUri,
+                      DocumentsContract.Document.MIME_TYPE_DIR, name);
+                  if (created == null) throw new IllegalStateException("No se pudo crear la carpeta " + name);
+                  return created;
+              }
+
+              private void savePendingText() {
+                  try {
+                      Uri root = DocumentsContract.buildDocumentUriUsingTree(
+                          exportTreeUri, DocumentsContract.getTreeDocumentId(exportTreeUri));
+                      Uri folder = getOrCreateFolder(root, "buceonet página");
+                      folder = getOrCreateFolder(folder, "agenda buceonet");
+                      folder = getOrCreateFolder(folder, "lista txt");
+                      String filename = pendingFilename == null ? "listado.txt" : pendingFilename;
+                      String folderId = DocumentsContract.getDocumentId(folder);
+                      Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(folder, folderId);
+                      try (Cursor cursor = getContentResolver().query(childrenUri,
+                          new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                              DocumentsContract.Document.COLUMN_DISPLAY_NAME}, null, null, null)) {
+                          if (cursor != null) {
+                              while (cursor.moveToNext()) {
+                                  if (filename.equals(cursor.getString(1))) {
+                                      Uri oldFile = DocumentsContract.buildDocumentUriUsingTree(folder, cursor.getString(0));
+                                      DocumentsContract.deleteDocument(getContentResolver(), oldFile);
+                                      break;
+                                  }
+                              }
+                          }
+                      }
+                      Uri fileUri = DocumentsContract.createDocument(getContentResolver(), folder, "text/plain", filename);
+                      if (fileUri == null) throw new IllegalStateException("No se pudo crear el TXT");
+                      byte[] bytes = Base64.decode(pendingBase64, Base64.DEFAULT);
+                      try (OutputStream output = getContentResolver().openOutputStream(fileUri, "w")) {
+                          if (output == null) throw new IllegalStateException("No se pudo abrir el TXT");
+                          output.write(bytes);
+                      }
+                      pendingFilename = null;
+                      pendingBase64 = null;
+                      Toast.makeText(this, "TXT guardado en Buceonet página/agenda buceonet/lista txt", Toast.LENGTH_LONG).show();
+                  } catch (Exception error) {
+                      Toast.makeText(this, "No se pudo guardar el TXT: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                  }
               }
 
               private boolean handleExternalUrl(String url) {
@@ -136,7 +221,7 @@ jobs:
                   else super.onBackPressed();
               }
           }
-          """)
+          """))
           manifest = root / "AndroidManifest.xml"
           xml = manifest.read_text()
           if "<queries>" not in xml:
